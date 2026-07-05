@@ -1,0 +1,180 @@
+/* ==========================================
+   ESTILO GENERAL
+========================================== */
+
+body{
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12pt;
+    background-color: #FFFFFF;
+    color: #222222;
+    margin: 10px;
+}
+
+/* ==========================================
+   TITULO PRINCIPAL
+========================================== */
+
+h1{
+    color:#8C1515;
+    font-size:26pt;
+    font-weight:bold;
+    border-bottom:2px solid #8C1515;
+    padding-bottom:5px;
+    margin-bottom:12px;
+}
+
+/* ==========================================
+   TITULOS DE LAS PAGINAS
+========================================== */
+
+h2{
+    color:#8C1515;
+    font-size:18pt;
+    font-weight:bold;
+    margin-top:6px;
+    margin-bottom:8px;
+}
+
+/* ==========================================
+   SUBTITULOS
+========================================== */
+
+h3{
+    color:#8C1515;
+    font-size:14pt;
+    font-weight:bold;
+    text-align:left;
+    margin-top:6px;
+    margin-bottom:6px;
+    border-left:5px solid #8C1515;
+    padding-left:8px;
+}
+
+/* ==========================================
+   TEXTO
+========================================== */
+
+p{
+
+    text-align:justify;
+    font-size:12pt;
+    line-height:1.35;
+    margin-top:4px;
+    margin-bottom:6px;
+
+}
+
+/* ==========================================
+   TABLAS
+========================================== */
+
+table.dataTable{
+
+    font-size:11pt;
+    border-collapse:collapse;
+}
+
+table.dataTable thead{
+
+    background:#8C1515;
+    color:white;
+}
+
+/* ==========================================
+   GRAFICOS
+========================================== */
+
+.chart-stage{
+
+    background:white;
+    border:1px solid #D9D9D9;
+    border-radius:6px;
+    padding:5px;
+    box-shadow:none;
+}
+
+/* ==========================================
+   SECCIONES
+========================================== */
+
+.section.level3{
+
+    background:white;
+    border:1px solid #D9D9D9;
+    border-radius:6px;
+    padding:10px;
+    margin-bottom:10px;
+}
+
+/* ==========================================
+   ESPACIADO GENERAL
+========================================== */
+
+.chart-wrapper{
+
+    padding:6px;
+}
+
+.row{
+
+    margin-bottom:8px;
+}
+/* ==========================================
+   ENCABEZADO SUPERIOR (NAVBAR)
+========================================== */
+
+/* Barra superior */
+.navbar{
+    background-color: #8C1515 !important;
+    border-color: #8C1515 !important;
+}
+
+/* Título del dashboard */
+.navbar .navbar-brand{
+    color: #FFFFFF !important;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* Botones del menú */
+.navbar .nav > li > a,
+.navbar-nav > li > a{
+    color: #FFFFFF !important;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 14px;
+}
+
+/* Botón activo */
+.navbar .nav > .active > a,
+.navbar .nav > .active > a:hover,
+.navbar .nav > .active > a:focus,
+.navbar-nav > .active > a{
+    background-color: #6D1010 !important;
+    color: #FFFFFF !important;
+}
+
+/* Color al pasar el mouse */
+.navbar .nav > li > a:hover,
+.navbar-nav > li > a:hover{
+    background-color: #A32020 !important;
+    color: #FFFFFF !important;
+}
+/* Página Acerca de */
+.acerca {
+    text-align: center;
+}
+
+.acerca p {
+    text-align: center;
+}
+
+.acerca h2,
+.acerca h3 {
+    text-align: center;
+}
+
+.acerca img {
+    display: block;
+    margin: 0 auto;
+}
