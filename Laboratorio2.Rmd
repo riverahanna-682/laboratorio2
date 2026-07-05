@@ -1,0 +1,519 @@
+---
+title: "Laboratorio 2 - Dashboard"
+author: "Grupo trabajo"
+
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+    css: estilos.css
+    source_code: embed
+    social: menu
+---
+
+```{r}
+library(ggplot2)
+library(corrplot)
+library(DT)
+library(knitr)
+library(dplyr)
+library(tidyr)
+library(sf)
+library(leaflet)
+Cantidad_anual_de_suicidios_reportados_en_el_Departamento_de_Antioquia_desde_2005_20260702 <- read.csv("Cantidad_anual_de_suicidios_reportados_en_el_Departamento_de_Antioquia_desde_2005_20260702.csv", stringsAsFactors=TRUE)
+suicidios_anti <- Cantidad_anual_de_suicidios_reportados_en_el_Departamento_de_Antioquia_desde_2005_20260702
+```
+
+# **Descripción**
+
+Column {data-width=100}
+-------------------------------------
+
+### **INFORMACIÓN** {data-width=50}
+<div style="height:450px; overflow-y:auto; padding-right:10px;">
+Los registros de suicidio en Antioquia entre 2005 y 2024 muestran variabilidad
+en la población objetivo y en el número de casos reportados. Para las variables
+cualitativas se presentan los municipios y regiones con mayor número de
+registros. Se observa una mayor concentración de casos en Medellín y en la
+región del Valle de Aburrá, lo que indica que los eventos se presentan
+principalmente en zonas con mayor densidad poblacional.
+
+**Muestra:** El conjunto de datos está conformado por 2625
+registros, correspondientes a los reportes de suicidios registrados 
+en el departamento de Antioquia entre 2005 y 2024.
+
+```{r, echo=FALSE, fig.align="center", out.width="80%"}
+ggplot(suicidios_anti,
+       aes(x = Anio,
+           y = NumeroCasos,
+           fill = NombreRegion)) +
+  scale_fill_brewer(palette = "Set1") + 
+  geom_col() +
+  labs(
+    title = "Cantidad de suicidios por región y año",
+    x = "Año",
+    y = "Número de casos",
+    fill = "Región"
+  ) +
+  theme_minimal()
+```
+</div>
+
+### **VARIABLES** {data-width=50} 
+
+```{r Tabla de estadisticas}
+
+# Obtener los tipos de las variables
+tipos <- sapply(suicidios_anti, function(x) class(x)[1])
+
+# Traducir al español
+tipos_es <- dplyr::recode(
+  tipos,
+  "numeric" = "Numérica",
+  "integer" = "Entera",
+  "character" = "Texto",
+  "factor" = "Categórica",
+  "logical" = "Lógica",
+  "Date" = "Fecha",
+  "POSIXct" = "Fecha y hora",
+  .default = "Otro"
+)
+
+tabla_variables <- data.frame(
+  Variable = names(suicidios_anti),
+  `Tipo de dato` = tipos_es
+)
+
+datatable(
+  tabla_variables,
+  options = list(
+    paging = FALSE,
+    searching = FALSE,
+    info = FALSE,
+    ordering = FALSE
+  ),
+  rownames = FALSE
+)
+```
+
+Row {data-height=40}
+-------------------------------------
+
+### **FUENTE**
+**Datos Abiertos Colombia. Cantidad de suicidios en Antioquia 2007-2021.**
+<br>
+**Disponible en:**
+https://www.datos.gov.co/Salud-y-Protecci-n-Social/Cantidad-de-suicidios-en-Antioquia-2007-2021/ghsz-zbhz
+
+
+**Análisis Descriptivo**
+================================================================================
+Column {data-width=100}
+------------------------------------
+### **Estadisticas Descriptivas**
+```{r}
+resumen <- summary(suicidios_anti)
+kable(
+  resumen,
+  caption = "Resumen estadístico de las variables"
+)
+```
+Column {data-width=50}
+------------------------------------
+### **Analisis Descriptivo**
+Los registros de suicidio en Antioquia entre 2005 y 2024 muestran variabilidad
+en la población objetivo y en el número de casos reportados. Para las variables
+cualitativas se presentan los municipios y regiones con mayor número de
+registros. Se observa una mayor concentración de casos en Medellín y en la
+región del Valle de Aburrá, lo que indica que los eventos se presentan
+principalmente en zonas con mayor densidad poblacional.
+<br>
+Las variables CódigoMunicipio, CódigoRegion y Ubicación no fueron utilizadas en el análisis gráfico debido a su naturaleza técnica como identificadores. Sin embargo, se conservaron en la base de datos para posibles validaciones o análisis complementarios.
+<br>
+Por ultimo tener encuenta que la variable **Causa de mortalidad** es una variable constante en el conjunto de datos 
+que es sobre el suicidio por ende todas las causas de mortalidad registradas son de suicidio. 
+
+
+
+
+# **Análisis Univariado**
+
+Column {data-width=50}
+------------------------------------------------------
+
+### **Mapa de Ubicacion ** {data-width=50}
+
+Utilizando la Ubicacion registrada en la base de datos y con la ayuda del software R, realizamos un mapa con la ubicacion registrada, la cual nos indica la ubicacion y el numero de registros en distintas zonas del departamento de Antioquia 
+<div style="width:80%; height:350px; margin:auto;">
+```{r echo=FALSE}
+# Renombrar columna
+suicidios_map <- suicidios_anti %>%
+  rename(ubicacion = `Ubicación`)
+
+# Limpiar coordenadas
+suicidios_map <- suicidios_map %>%
+  mutate(ubicacion = gsub("POINT \\(|\\)", "", ubicacion)) %>%
+  separate(ubicacion, into = c("lon", "lat"), sep = " ") %>%
+  mutate(
+    lon = as.numeric(lon),
+    lat = as.numeric(lat)
+  )
+
+# Convertir a sf
+suicidios_map <- st_as_sf(
+  suicidios_map,
+  coords = c("lon", "lat"),
+  crs = 4326
+)
+
+# Mapa
+leaflet(suicidios_map) %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addCircleMarkers(
+    radius = 4,
+    color = "#8C1515",
+    fillColor = "#8C1515",
+    fillOpacity = 0.6,
+    stroke = FALSE,
+    popup = ~paste0(
+      "<b>Municipio:</b> ", NombreMunicipio,
+      "<br><b>Región:</b> ", NombreRegion,
+      "<br><b>Casos:</b> ", NumeroCasos
+    )
+  )
+```
+</div>
+### **Numero De Casos** {data-width=50}
+La distribución del número de casos presenta una asimetría positiva, ya que la media (3.21) es mayor que la mediana (1). Esto indica que la mayoría de los registros tienen valores bajos, pero existen algunos valores altos que influyen en el promedio.
+<div style="height:450px; overflow-y:auto; padding-right:10px;">
+```{r, echo=FALSE, fig.align="center", out.width="65%"}
+media <- mean(suicidios_anti$NumeroCasos, na.rm = TRUE)
+mediana <- median(suicidios_anti$NumeroCasos, na.rm = TRUE)
+
+ggplot(suicidios_anti, aes(x = NumeroCasos)) +
+  
+  # Histograma
+  geom_histogram(aes(y = ..density..),
+                 bins = 30,
+                 fill = "#8C1515",
+                 alpha = 0.6) +
+  
+  # Densidad
+  geom_density(color = "black", linewidth = 1) +
+  
+  # Media
+  geom_vline(xintercept = media,
+             color = "blue",
+             linetype = "dashed",
+             linewidth = 1) +
+  
+  # Mediana
+  geom_vline(xintercept = mediana,
+             color = "darkgreen",
+             linetype = "dashed",
+             linewidth = 1) +
+  
+  # Zoom 0 a 50 sin eliminar datos
+  coord_cartesian(xlim = c(0, 50)) +
+  
+  # Etiquetas de valores (CLAVE)
+  annotate("text",
+           x = media,
+           y = 0.02,
+           label = paste("Media =", round(media, 2)),
+           color = "blue",
+           angle = 90,
+           vjust = -0.5) +
+  
+  annotate("text",
+           x = mediana,
+           y = 0.03,
+           label = paste("Mediana =", round(mediana, 2)),
+           color = "darkgreen",
+           angle = 90,
+           vjust = -0.5) +
+  
+  labs(
+    title = "Distribución del Número de Casos",
+    x = "Número de casos",
+    y = "Densidad"
+  ) +
+  
+  theme_minimal()
+```
+
+
+</div>
+
+
+Column {data-width=50}
+------------------------------------------------------
+
+### **Tendencia Anual de Casos de Suicidio** {data-width=50}
+<div style="height:450px; overflow-y:auto; padding-right:10px;">
+En esta tendencia podemos observar como desde el año 2010 hasta aproximadamente el año 2013 la tendencia se mantuvo
+en un umbral no superior a 350 casos y como apartir de 2015 esa tendencia se fue a la alza manteniendose asi hasta 2025 donde tuvo un pequeño balance entre 500 y 600 casos.
+```{r, echo=FALSE, fig.align="center", out.width="65%"}
+suicidios_anti %>%
+  group_by(Anio) %>%
+  summarise(total = sum(NumeroCasos)) %>%
+  ggplot(aes(x = Anio, y = total)) +
+  geom_line(color = "#8C1515", linewidth = 1) +
+  geom_smooth(se = FALSE, color = "black") +
+  labs(
+    title = "Tendencia anual del número de casos de suicidio",
+    x = "Año",
+    y = "Número de casos"
+  ) +
+  theme_minimal()
+```
+
+
+</div>
+
+
+
+
+### **Registros por Región **{data-width=50}
+<div style="height:450px; overflow-y:auto; padding-right:10px;">
+La distribución de los registros de suicidio por región evidencia una alta concentración en el Valle de Aburrá, que reúne el 60,1 % del total de los casos registrados. En segundo lugar se encuentra la región del Oriente, con un 12,0 %, mientras que las demás regiones presentan participaciones inferiores al 7,1 %, siendo Magdalena Medio la de menor proporción, con apenas 1,6 % de los registros. Estos resultados muestran una distribución espacial desigual del fenómeno, concentrándose principalmente en el Valle de Aburrá, lo que podría estar asociado, entre otros factores, a la mayor densidad poblacional y el grado de urbanización. 
+```{r, echo=FALSE, fig.align="center", out.width="65%"}
+suicidios_anti %>%
+  group_by(NombreRegion) %>%
+  summarise(total = sum(NumeroCasos), .groups = "drop") %>%
+  mutate(porcentaje = total / sum(total) * 100) %>%
+  ggplot(aes(x = reorder(NombreRegion, porcentaje), y = porcentaje)) +
+  geom_col(fill = "#8C1515") +
+  geom_text(
+    aes(label = paste0(round(porcentaje, 1), "%")),
+    vjust = -0.3,
+    size = 3.5
+  ) +
+  labs(
+    title = "Porcentaje de registros por región",
+    x = "Región",
+    y = "Porcentaje (%)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+</div>
+
+**Análisis Bivariado**
+================================================================================
+
+Column {data-width=50}
+-------------------------------------
+
+### **Correlación: Población Objetivo vs. Número de Casos**{data-width=50}
+
+<div style="height:480px; overflow-y:auto; padding-right:10px;">
+Se encontró una correlación de Pearson positiva y muy fuerte (r = 0,973; p < 0,001) entre el tamaño de la población objetivo de cada municipio y el número de casos de suicidio registrados. Esto indica que, a mayor población, mayor es el número absoluto de casos reportados, lo cual es esperable dado que el indicador no está normalizado por habitante. Esta relación sugiere que, para comparaciones justas entre municipios, sería más adecuado analizar tasas de suicidio por cada 100.000 habitantes en lugar del número absoluto de casos.
+
+```{r, echo=FALSE, fig.align="center", out.width="80%", warning=FALSE, message=FALSE}
+# Limpiar la variable de población (quitar comas de miles) y convertir a numérica
+suicidios_biv <- suicidios_anti %>%
+  mutate(NumeroPoblacionObjetivo = as.numeric(gsub(",", "", NumeroPoblacionObjetivo)))
+
+# Correlación de Pearson
+cor_test_pob <- cor.test(suicidios_biv$NumeroPoblacionObjetivo,
+                          suicidios_biv$NumeroCasos,
+                          method = "pearson")
+
+ggplot(suicidios_biv, aes(x = NumeroPoblacionObjetivo, y = NumeroCasos)) +
+  geom_point(color = "#8C1515", alpha = 0.5) +
+  geom_smooth(method = "lm", se = TRUE, color = "black") +
+  scale_x_continuous(labels = scales::comma) +
+  labs(
+    title = "Relación entre población objetivo y número de casos",
+    subtitle = paste0("r de Pearson = ", round(cor_test_pob$estimate, 3),
+                       "  |  p-valor < 0.001"),
+    x = "Población objetivo",
+    y = "Número de casos"
+  ) +
+  theme_minimal()
+```
+
+</div>
+
+### **Correlación: Año vs. Total de Casos**{data-width=50}
+
+<div style="height:480px; overflow-y:auto; padding-right:10px;">
+La correlación entre el año y el total anual de casos es positiva y fuerte (r = 0,911; p < 0,001), lo que confirma estadísticamente la tendencia creciente observada en el análisis univariado. Esto respalda la idea de que el número de suicidios reportados en Antioquia ha aumentado de manera sostenida a lo largo del periodo 2005-2025.
+
+```{r, echo=FALSE, fig.align="center", out.width="80%", warning=FALSE, message=FALSE}
+casos_anio <- suicidios_anti %>%
+  group_by(Anio) %>%
+  summarise(total = sum(NumeroCasos), .groups = "drop")
+
+cor_test_anio <- cor.test(casos_anio$Anio, casos_anio$total, method = "pearson")
+
+ggplot(casos_anio, aes(x = Anio, y = total)) +
+  geom_point(color = "#8C1515", size = 2) +
+  geom_smooth(method = "lm", se = TRUE, color = "black") +
+  labs(
+    title = "Relación entre el año y el total de casos registrados",
+    subtitle = paste0("r de Pearson = ", round(cor_test_anio$estimate, 3),
+                       "  |  p-valor < 0.001"),
+    x = "Año",
+    y = "Total de casos"
+  ) +
+  theme_minimal()
+```
+
+</div>
+
+Column {data-width=50}
+-------------------------------------
+
+### **Chi-cuadrado: Región vs. Nivel de Casos**{data-width=50}
+
+<div style="height:480px; overflow-y:auto; padding-right:10px;">
+La prueba Chi-cuadrado de independencia (χ² = 386,53; gl = 8; p < 0,001) evidencia una asociación estadísticamente significativa entre la región y el nivel de casos (Alto/Bajo respecto a la mediana). La región Valle de Aburrá concentra la mayor proporción de registros clasificados como "Alto" (más del 90 %), mientras que regiones como Occidente y Norte presentan una proporción considerablemente mayor de registros "Bajo". Esto confirma que la distribución del fenómeno no es homogénea entre regiones y que la variable región está asociada con la magnitud de los casos reportados.
+
+```{r, echo=FALSE, fig.align="center", out.width="80%", warning=FALSE, message=FALSE}
+# Categorizar el número de casos en Alto/Bajo según la mediana
+mediana_casos <- median(suicidios_anti$NumeroCasos, na.rm = TRUE)
+
+suicidios_chi <- suicidios_anti %>%
+  mutate(NivelCasos = ifelse(NumeroCasos > mediana_casos, "Alto", "Bajo"))
+
+tabla_chi <- table(suicidios_chi$NombreRegion, suicidios_chi$NivelCasos)
+chi_test <- chisq.test(tabla_chi)
+
+suicidios_chi %>%
+  count(NombreRegion, NivelCasos) %>%
+  group_by(NombreRegion) %>%
+  mutate(porcentaje = n / sum(n) * 100) %>%
+  ggplot(aes(x = reorder(NombreRegion, porcentaje * (NivelCasos == "Alto")),
+             y = porcentaje, fill = NivelCasos)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = c("Alto" = "#8C1515", "Bajo" = "#D9D9D9")) +
+  labs(
+    title = "Proporción de registros con nivel de casos Alto/Bajo por región",
+    subtitle = paste0("Chi-cuadrado = ", round(chi_test$statistic, 2),
+                       ", gl = ", chi_test$parameter,
+                       ", p-valor < 0.001"),
+    x = "Región",
+    y = "Proporción",
+    fill = "Nivel de casos"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+</div>
+
+
+### **Casos de Suicidio por Región según Período (2005-2014 vs. 2015-2024)** {data-width=50}
+<div style="height:520px; overflow-y:auto; padding-right:10px;">
+ La prueba Chi-cuadrado de independencia (χ² = 63,55; gl = 8; p < 0,001) confirma que esta relación entre región y período es estadísticamente significativa: el crecimiento no se reparte de forma proporcional entre regiones.En casi todas las regiones el número de casos aumentó del primer período al segundo, aunque no en la misma proporción: Urabá (+75 %), Occidente (+59 %) y Valle de Aburrá (+56 %) tuvieron el mayor crecimiento. Sin embargo, algunas regiones —Suroeste (-6 %), Nordeste (-7 %) y Magdalena Medio (-9 %)— en realidad disminuyeron al comparar dos períodos de igual duración (10 años cada uno, excluyendo 2025 para que la comparación no esté sesgada).
+
+```{r, echo=FALSE, fig.align="center", out.width="80%", warning=FALSE, message=FALSE}
+# Se excluye 2025 para que ambos períodos tengan exactamente 10 años
+# y la comparación no esté sesgada por la duración de cada período
+casos_periodo <- suicidios_biv %>%
+  filter(Anio <= 2024) %>%
+  mutate(Periodo = ifelse(Anio <= 2014, "2005-2014", "2015-2024")) %>%
+  group_by(NombreRegion, Periodo) %>%
+  summarise(casos_totales = sum(NumeroCasos, na.rm = TRUE), .groups = "drop")
+
+tabla_region_periodo <- xtabs(casos_totales ~ NombreRegion + Periodo, data = casos_periodo)
+chi_periodo <- chisq.test(tabla_region_periodo)
+
+ggplot(casos_periodo, aes(x = reorder(NombreRegion, -casos_totales, FUN = sum),
+                           y = casos_totales, fill = Periodo)) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(values = c("2005-2014" = "#D9D9D9", "2015-2024" = "#8C1515")) +
+  labs(
+    title = "Número de casos por región, comparando dos períodos de 10 años",
+    subtitle = paste0("Chi-cuadrado = ", round(chi_periodo$statistic, 2),
+                       ", gl = ", chi_periodo$parameter,
+                       ", p-valor < 0.001"),
+    x = "Región",
+    y = "Número de casos",
+    fill = "Período"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+</div>
+
+**Conclusiones**
+================================================================================
+<div style="height:90vh; overflow-y:auto;">
+Column {data-width=40}
+-----------------------------------------
+
+### **Conclusión 1**
+Los registros de suicidio presentan una distribución geográfica desigual en el departamento de Antioquia. La región del Valle de Aburrá concentra el 60,1 % de los registros, seguida por el Oriente (12,0 %), mientras que las demás regiones presentan participaciones inferiores al 7,1 %. Esta concentración sugiere que el fenómeno se encuentra principalmente en las zonas con mayor densidad poblacional y desarrollo urbano.
+
+Column {data-width=40}
+-----------------------------------------
+### **Conclusión 2**
+El análisis temporal evidenció un incremento progresivo en el número de casos registrados durante los últimos años, especialmente a partir de 2015. Este comportamiento indica la importancia de fortalecer las estrategias de prevención, seguimiento y atención en salud mental, priorizando las regiones donde el crecimiento ha sido más evidente.
+
+Column {data-width=40}
+-----------------------------------------
+### **Conclusión 3**
+La distribución del número de casos presenta una asimetría positiva, reflejada en una media (3,21) superior a la mediana (1). Esto indica que la mayoría de los registros corresponden a pocos casos, mientras que un número reducido de observaciones concentra valores elevados, influyendo significativamente sobre el promedio general.
+
+Column {data-width=40}
+-----------------------------------------
+### **Conclusión 4**
+El análisis espacial mediante el mapa permitió identificar que los registros se encuentran distribuidos en gran parte del departamento, aunque con una mayor concentración en determinados municipios y regiones. Esta representación facilita la identificación de áreas prioritarias para el diseño de políticas públicas y programas de prevención.
+
+Column {data-width=40}
+-----------------------------------------
+### **Conclusión 5**
+La base de datos proporciona información geográfica, temporal y demográfica suficiente para caracterizar el comportamiento del fenómeno en Antioquia. Además, constituye una fuente adecuada para desarrollar análisis más avanzados, como estudios bivariados o modelos estadísticos que permitan identificar factores asociados a la ocurrencia de los casos.
+
+Column {data-width=40}
+-----------------------------------------
+### **Conclusión 6**
+El análisis bivariado confirmó una fuerte relación entre la población y el número de casos (r = 0,973), así como un incremento significativo de los suicidios a lo largo del tiempo (r = 0,911). Además, las pruebas Chi-cuadrado mostraron que la distribución de los casos varía significativamente entre regiones y períodos (p < 0,001), evidenciando que el fenómeno no es homogéneo y que algunas regiones han presentado un crecimiento mayor que otras.
+</div>
+
+
+**Acerca de**
+================================================
+
+### **Información del proyecto**
+<div class="acerca">
+![](logo_univalle.png){width=180px}
+
+<br>
+
+
+**Título del proyecto**
+
+Análisis exploratorio de los registros de suicidio en el departamento de Antioquia (2005-2025)
+
+<br>
+
+**Elaborado por**
+
+Andrés Felipe Velasco<br>
+Andrey Alirio Pinzón<br>
+Hanna Sofía Rivera
+
+<br>
+**Universidad del Valle**
+
+Facultad de Ingeniería<br>
+Programa Académico de Estadística<br>
+Procesamiento de Datos
+
+<br>
+**Herramientas utilizadas**
+
+R • RStudio • ggplot2 • dplyr • leaflet • Flexdashboard • R Markdown
+
+<br><br>
+
+**Fecha:** 05 de junio de 2026
+</div>
