@@ -446,35 +446,29 @@ ggplot(casos_periodo, aes(x = reorder(NombreRegion, -casos_totales, FUN = sum),
 **Conclusiones**
 ================================================================================
 <div style="height:90vh; overflow-y:auto;">
-Column {data-width=40}
------------------------------------------
 
-### **Conclusión 1**
+
+### **Conclusión 1**{data-width=40}
 Los registros de suicidio presentan una distribución geográfica desigual en el departamento de Antioquia. La región del Valle de Aburrá concentra el 60,1 % de los registros, seguida por el Oriente (12,0 %), mientras que las demás regiones presentan participaciones inferiores al 7,1 %. Esta concentración sugiere que el fenómeno se encuentra principalmente en las zonas con mayor densidad poblacional y desarrollo urbano.
 
-Column {data-width=40}
------------------------------------------
-### **Conclusión 2**
+
+### **Conclusión 2**{data-width=40}
 El análisis temporal evidenció un incremento progresivo en el número de casos registrados durante los últimos años, especialmente a partir de 2015. Este comportamiento indica la importancia de fortalecer las estrategias de prevención, seguimiento y atención en salud mental, priorizando las regiones donde el crecimiento ha sido más evidente.
 
-Column {data-width=40}
------------------------------------------
-### **Conclusión 3**
+
+### **Conclusión 3**{data-width=40}
 La distribución del número de casos presenta una asimetría positiva, reflejada en una media (3,21) superior a la mediana (1). Esto indica que la mayoría de los registros corresponden a pocos casos, mientras que un número reducido de observaciones concentra valores elevados, influyendo significativamente sobre el promedio general.
 
-Column {data-width=40}
------------------------------------------
-### **Conclusión 4**
+
+### **Conclusión 4**{data-width=40}
 El análisis espacial mediante el mapa permitió identificar que los registros se encuentran distribuidos en gran parte del departamento, aunque con una mayor concentración en determinados municipios y regiones. Esta representación facilita la identificación de áreas prioritarias para el diseño de políticas públicas y programas de prevención.
 
-Column {data-width=40}
------------------------------------------
-### **Conclusión 5**
+
+### **Conclusión 5**{data-width=40}
 La base de datos proporciona información geográfica, temporal y demográfica suficiente para caracterizar el comportamiento del fenómeno en Antioquia. Además, constituye una fuente adecuada para desarrollar análisis más avanzados, como estudios bivariados o modelos estadísticos que permitan identificar factores asociados a la ocurrencia de los casos.
 
-Column {data-width=40}
------------------------------------------
-### **Conclusión 6**
+
+### **Conclusión 6**{data-width=40}
 El análisis bivariado confirmó una fuerte relación entre la población y el número de casos (r = 0,973), así como un incremento significativo de los suicidios a lo largo del tiempo (r = 0,911). Además, las pruebas Chi-cuadrado mostraron que la distribución de los casos varía significativamente entre regiones y períodos (p < 0,001), evidenciando que el fenómeno no es homogéneo y que algunas regiones han presentado un crecimiento mayor que otras.
 </div>
 
